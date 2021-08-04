@@ -1,6 +1,9 @@
 import datetime as dt
 
-date_now = dt.datetime.now().date()
+DATE_FORMAT = '%d.%m.%Y'
+# Единственное, что пока пришло в голову, хотя почитав
+# про now и today особой разницы не увидел
+date_now = dt.date.today()
 
 
 class Calculator:
@@ -8,14 +11,14 @@ class Calculator:
         self.limit = limit
         self.records = []
 
-    def add_record(self, record):
-        self.records.append(record)
+    def add_record(self, new_record):
+        self.records.append(new_record)
 
     def get_today_stats(self):
         spent_today = 0
-        for i in self.records:
-            if i.date == date_now:
-                spent_today += i.amount
+        for record in self.records:
+            if record.date == date_now:
+                spent_today += record.amount
         return spent_today
 
     def get_today_remained(self):
@@ -26,19 +29,20 @@ class Calculator:
         week_spent = 0
         delta = dt.timedelta(days=7)
         seven_days = date_now - delta
-        for i in self.records:
-            if seven_days < i.date <= date_now:
-                week_spent += i.amount
+        for record in self.records:
+            if seven_days < record.date <= date_now:
+                week_spent += record.amount
         return week_spent
 
 
 class Record:
     def __init__(self, amount, comment, date=None):
         self.amount = amount
-        self.date = date_now
         self.comment = comment
         if date is not None:
-            self.date = dt.datetime.strptime(date, '%d.%m.%Y').date()
+            self.date = dt.datetime.strptime(date, DATE_FORMAT).date()
+        else:
+            self.date = date_now
 
 
 class CashCalculator(Calculator):
@@ -46,25 +50,26 @@ class CashCalculator(Calculator):
     EURO_RATE = 85.00
 
     def get_today_cash_remained(self, currency):
-        if currency == 'rub':
-            rate = 1
-            name = 'руб'
-        elif currency == 'usd':
-            rate = self.USD_RATE
-            name = 'USD'
-        elif currency == 'eur':
-            rate = self.EURO_RATE
-            name = 'Euro'
-        else:
+        currency_list = {
+            'usd': (self.USD_RATE, 'USD'),
+            'eur': (self.EURO_RATE, 'Euro'),
+            'rub': (1, 'руб')
+        }
+
+        if currency not in currency_list:
             return 'валюта не определена'
 
+        rate, name = currency_list[currency]
+
         remainder = round(self.get_today_remained() / rate, 2)
-        if remainder > 0:
-            return f'На сегодня осталось {remainder} {name}'
-        elif remainder == 0:
+        module_reminder = abs(remainder)
+        # Про guard block пока не очень понял, перечитаю на свежую голову
+        if remainder == 0:
             return 'Денег нет, держись'
+        elif remainder > 0:
+            return f'На сегодня осталось {remainder} {name}'
         else:
-            return f'Денег нет, держись: твой долг - {abs(remainder)} {name}'
+            return f'Денег нет, держись: твой долг - {module_reminder} {name}'
 
 
 class CaloriesCalculator(Calculator):
@@ -72,6 +77,6 @@ class CaloriesCalculator(Calculator):
         calories = self.get_today_remained()
         if calories <= 0:
             return 'Хватит есть!'
-        else:
-            return (f'Сегодня можно съесть что-нибудь ещё, но '
-                    f'с общей калорийностью не более {calories} кКал')
+        # Получается в else нет смысла, достаточно return
+        return ('Сегодня можно съесть что-нибудь ещё, но '
+                f'с общей калорийностью не более {calories} кКал')
