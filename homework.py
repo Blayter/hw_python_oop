@@ -1,9 +1,6 @@
 import datetime as dt
 
 DATE_FORMAT = '%d.%m.%Y'
-# Единственное, что пока пришло в голову, хотя почитав
-# про now и today особой разницы не увидел
-date_now = dt.date.today()
 
 
 class Calculator:
@@ -14,7 +11,12 @@ class Calculator:
     def add_record(self, new_record):
         self.records.append(new_record)
 
+    @staticmethod
+    def get_today():
+        return dt.date.today()
+
     def get_today_stats(self):
+        date_now = self.get_today()
         spent_today = 0
         for record in self.records:
             if record.date == date_now:
@@ -22,13 +24,12 @@ class Calculator:
         return spent_today
 
     def get_today_remained(self):
-        remainder = self.limit - self.get_today_stats()
-        return remainder
+        return self.limit - self.get_today_stats()
 
     def get_week_stats(self):
+        date_now = self.get_today()
         week_spent = 0
-        delta = dt.timedelta(days=7)
-        seven_days = date_now - delta
+        seven_days = date_now - dt.timedelta(days=7)
         for record in self.records:
             if seven_days < record.date <= date_now:
                 week_spent += record.amount
@@ -42,7 +43,7 @@ class Record:
         if date is not None:
             self.date = dt.datetime.strptime(date, DATE_FORMAT).date()
         else:
-            self.date = date_now
+            self.date = dt.date.today()
 
 
 class CashCalculator(Calculator):
@@ -62,14 +63,14 @@ class CashCalculator(Calculator):
         rate, name = currency_list[currency]
 
         remainder = round(self.get_today_remained() / rate, 2)
-        module_reminder = abs(remainder)
-        # Про guard block пока не очень понял, перечитаю на свежую голову
+
         if remainder == 0:
             return 'Денег нет, держись'
-        elif remainder > 0:
+        if remainder > 0:
             return f'На сегодня осталось {remainder} {name}'
-        else:
-            return f'Денег нет, держись: твой долг - {module_reminder} {name}'
+
+        module_reminder = abs(remainder)
+        return f'Денег нет, держись: твой долг - {module_reminder} {name}'
 
 
 class CaloriesCalculator(Calculator):
@@ -77,6 +78,6 @@ class CaloriesCalculator(Calculator):
         calories = self.get_today_remained()
         if calories <= 0:
             return 'Хватит есть!'
-        # Получается в else нет смысла, достаточно return
+
         return ('Сегодня можно съесть что-нибудь ещё, но '
                 f'с общей калорийностью не более {calories} кКал')
