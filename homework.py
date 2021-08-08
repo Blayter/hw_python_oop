@@ -11,12 +11,8 @@ class Calculator:
     def add_record(self, new_record):
         self.records.append(new_record)
 
-    @staticmethod
-    def get_today():
-        return dt.date.today()
-
     def get_today_stats(self):
-        date_now = self.get_today()
+        date_now = dt.date.today()
         spent_today = 0
         for record in self.records:
             if record.date == date_now:
@@ -27,7 +23,7 @@ class Calculator:
         return self.limit - self.get_today_stats()
 
     def get_week_stats(self):
-        date_now = self.get_today()
+        date_now = dt.date.today()
         week_spent = 0
         seven_days = date_now - dt.timedelta(days=7)
         for record in self.records:
@@ -51,6 +47,10 @@ class CashCalculator(Calculator):
     EURO_RATE = 85.00
 
     def get_today_cash_remained(self, currency):
+        balance = self.get_today_remained()
+        if balance == 0:
+            return 'Денег нет, держись'
+
         currency_list = {
             'usd': (self.USD_RATE, 'USD'),
             'eur': (self.EURO_RATE, 'Euro'),
@@ -64,8 +64,6 @@ class CashCalculator(Calculator):
 
         remainder = round(self.get_today_remained() / rate, 2)
 
-        if remainder == 0:
-            return 'Денег нет, держись'
         if remainder > 0:
             return f'На сегодня осталось {remainder} {name}'
 
